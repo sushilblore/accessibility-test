@@ -9,6 +9,7 @@ import android.accessibilityservice.AccessibilityServiceInfo;
 import android.content.Intent;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityNodeInfo;
 
 public class MyAccessibilityService extends AccessibilityService {
 
@@ -30,18 +31,14 @@ public class MyAccessibilityService extends AccessibilityService {
         // Set the type of events that this service wants to listen to. Others won't be passed to this service.
         // We are only considering windows state changed event.
         AccessibilityServiceInfo info = new AccessibilityServiceInfo();
-        info.eventTypes = AccessibilityEvent.TYPE_WINDOWS_CHANGED | AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED | AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED;
+        info.eventTypes = AccessibilityEvent.TYPE_WINDOWS_CHANGED | AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED| AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED;
         // If you only want this service to work with specific applications, set their package names here. Otherwise, when the service is activated, it will listen to events from all applications.
-//        info.packageNames = new String[]{"com.example.android.myFirstApp", "com.example.android.mySecondApp"};
+        info.packageNames = new String[]{"com.contextlogic.wish",};
         // Set the type of feedback your service will provide. We are setting it to GENERIC.
         info.feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC;
         // Default services are invoked only if no package-specific ones are present for the type of AccessibilityEvent generated.
         // This is a general-purpose service, so we will set some flags
-        info.flags = AccessibilityServiceInfo.DEFAULT;
-        info.flags = AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS;
-        info.flags = AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS;
-        info.flags = AccessibilityServiceInfo.FLAG_REQUEST_ENHANCED_WEB_ACCESSIBILITY;
-        info.flags = AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
+        info.flags = AccessibilityServiceInfo.DEFAULT | AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS | AccessibilityServiceInfo.FLAG_REQUEST_ENHANCED_WEB_ACCESSIBILITY | AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
         // We are keeping the timeout to 0 as we don’t need any delay or to pause our accessibility events
         info.notificationTimeout = 0;
         this.setServiceInfo(info);
@@ -49,12 +46,27 @@ public class MyAccessibilityService extends AccessibilityService {
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
-        Log.d(TAG, "onAccessibilityEvent: " + event.toString());
-        if (event.getEventType() == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED) {
-            if (event.getPackageName().equals("com.android.chrome")) {
-                getApplicationContext().startService(new Intent(getApplicationContext(), HeadService.class));
+//        Log.d(TAG, "onAccessibilityEvent: " + event.toString());
+
+        AccessibilityNodeInfo source = event.getSource();
+        if (source == null) {
+            return;
+        }
+//        Log.d("Event:: ", event.toString());
+//        Log.d("Source:: ", source.toString());
+        traverseView(source);
+//        if (source.getText() != null)
+//            Log.d("Text:: ", source.getText().toString());
+    }
+
+    private void traverseView(AccessibilityNodeInfo info) {
+        for (int i = 0; i < info.getChildCount(); i++) {
+            if (info.getChild(i) != null) {
+//                Log.d("traverse:: ", info.getChild(i).getClassName().toString());
+                if (info.getChild(i).getText() != null)
+                    Log.d("traverse text:: ", info.getChild(i).getText().toString());
+                traverseView(info.getChild(i));
             }
         }
     }
-
 }
